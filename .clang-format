@@ -1,0 +1,17 @@
+{
+  UseTab: Never,
+  IndentWidth: 4,
+  TabWidth: 4,
+  AllowShortIfStatementsOnASingleLine: false,
+  IndentCaseLabels: false,
+  ColumnLimit: 0,
+  AccessModifierOffset: -4,
+  NamespaceIndentation: All,
+  FixNamespaceComments: false,
+  AlignAfterOpenBracket: Align,
+  AlignConsecutiveAssignments: Consecutive,
+  AlignTrailingComments: true,
+  AllowAllParametersOfDeclarationOnNextLine: true,
+
+
+}
