@@ -1,21 +1,43 @@
-#include <opencv2/highgui.hpp>
 #include <iostream>
+#include <opencv2/highgui.hpp>
 
 using namespace cv;
 
-int main() {
-  int value = 128;
-  namedWindow("TP1");                                 // crée une fenêtre
-  createTrackbar("track", "TP1", nullptr, 255, NULL); // un slider
-  setTrackbarPos("track", "TP1", value);
-  Mat f = imread("lena.png"); // lit l'image "lena.png"
-  imshow("TP1", f);         // l'affiche dans la fenêtre
-  while (waitKey(50) < 0)     // attend une touche
-  {                           // Affiche la valeur du slider
-    int new_value = getTrackbarPos("track", "TP1");
-    if (value != new_value) {
-      value = new_value;
-      std::cout << "value=" << value << std::endl;
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        std::cout << "Usage: " << argv[0] << " <image_path>" << std::endl;
+        return -1;
     }
-  }
+
+    int value            = 128;
+    String window_name   = "TP1";
+    String trackbar_name = "Trackbar";
+    String image_path    = argv[1];
+
+    Mat f = imread(image_path);
+
+    namedWindow(window_name);
+    createTrackbar(trackbar_name, window_name, nullptr, 255, NULL);
+    setTrackbarPos(trackbar_name, window_name, value);
+    imshow(window_name, f);
+
+    // Wait 50ms for a keystroke and get the key code
+    int key = waitKeyEx(50);
+
+    while (true) {
+        // Print the key code
+        std::cout << "Key code: " << key << std::endl;
+        key = waitKeyEx(500);
+
+        // If the key is ESC, break the loop
+        if (key == 27) {
+            break;
+        }
+
+        // int new_value = getTrackbarPos(trackbar_name, window_name);
+        // if (value != new_value) {
+        //     value = new_value;
+        //     std::cout << "value=" << value << std::endl;
+        // }
+    }
 }
