@@ -150,51 +150,59 @@ cv::Mat equalizeColorHistogram(Mat image) {
 
 // floydSteinbergDitheringGrey dither the matrix using the Floyd-Steinberg algorithm with float values
 cv::Mat floydSteinbergDitheringGrey(Mat image) {
-    Mat imageDithered;
-    image.convertTo(imageDithered, CV_32FC1);
+    Mat imageDithered(image);
 
     float oldPixelValue;
     float newPixelValue;
     float errorValue;
 
-    // For each pixel
-    for (int y = 0; y < image.rows; y++) {
-        for (int x = 0; x < image.cols; x++) {
-            // Print (x,y)
-            oldPixelValue = imageDithered.at<float>(y, x);
-            if (oldPixelValue > 127.0) {
-                newPixelValue = 255.0;
-            } else {
-                newPixelValue = 0.0;
-            }
-            errorValue = oldPixelValue - newPixelValue;
+    // Get all channels
+    std::vector<Mat> channels;
+    cv::split(imageDithered, channels);
 
-            imageDithered.at<float>(y, x) = newPixelValue;
-            if (x != image.cols - 1) {
-                imageDithered.at<float>(y, x + 1) += errorValue * 7.0 / 16.0;
-                if (y != image.rows - 1) {
-                    if (x != 0) {
-                        imageDithered.at<float>(y + 1, x - 1) += errorValue * 5.0 / 16.0;
-                    }
-                    imageDithered.at<float>(y + 1, x + 1) += errorValue / 16.0;
-                    imageDithered.at<float>(y + 1, x) += errorValue * 5.0 / 16.0;
+    // Print channel size
+    std::cout << "Size of the channel: " << channels.size() << std::endl;
+    // For each channel
+    for (int i = 0; i < channels.size(); i++) {
+        channels[i].convertTo(channels[i], CV_32FC1);
+        // For each pixel
+        for (int y = 0; y < channels[i].rows; y++) {
+            for (int x = 0; x < channels[i].cols; x++) {
+                oldPixelValue = channels[i].at<float>(y, x);
+                if (oldPixelValue > 127.0) {
+                    newPixelValue = 255.0;
+                } else {
+                    newPixelValue = 0.0;
                 }
-            } else {
-                if (y != image.rows - 1) {
-                    imageDithered.at<float>(y + 1, x) += errorValue * 5.0 / 16.0;
-                    if (x != 0) {
-                        imageDithered.at<float>(y + 1, x - 1) += errorValue * 3.0 / 16.0;
+                errorValue = oldPixelValue - newPixelValue;
+
+                channels[i].at<float>(y, x) = newPixelValue;
+                if (x != image.cols - 1) {
+                    channels[i].at<float>(y, x + 1) += errorValue * 7.0 / 16.0;
+                    if (y != image.rows - 1) {
+                        if (x != 0) {
+                            channels[i].at<float>(y + 1, x - 1) += errorValue * 5.0 / 16.0;
+                        }
+                        channels[i].at<float>(y + 1, x + 1) += errorValue / 16.0;
+                        channels[i].at<float>(y + 1, x) += errorValue * 5.0 / 16.0;
+                    }
+                } else {
+                    if (y != image.rows - 1) {
+                        channels[i].at<float>(y + 1, x) += errorValue * 5.0 / 16.0;
+                        if (x != 0) {
+                            channels[i].at<float>(y + 1, x - 1) += errorValue * 3.0 / 16.0;
+                        }
                     }
                 }
             }
         }
+        channels[i].convertTo(channels[i], CV_8UC1);
     }
 
-    // Print finished
-    Mat imageDithered8UC1;
+    // Merge the channels
+    cv::merge(channels, imageDithered);
 
-    imageDithered.convertTo(imageDithered8UC1, CV_8UC1);
-    return imageDithered8UC1;
+    return imageDithered;
 }
 
 // halfToningGreyScale convert the image to grey scale and apply the floyd-steinberg dithering algorithm
