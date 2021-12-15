@@ -148,7 +148,7 @@ cv::Mat equalizeColorHistogram(Mat image) {
     return equalizedImage;
 }
 
-// floydSteinbergDitheringGrey dither the grey image using the Floyd-Steinberg algorithm with float values
+// floydSteinbergDitheringGrey dither the matrix using the Floyd-Steinberg algorithm with float values
 cv::Mat floydSteinbergDitheringGrey(Mat image) {
     Mat imageDithered;
     image.convertTo(imageDithered, CV_32FC1);
@@ -287,8 +287,6 @@ int main(int argc, char **argv) {
         if (key == 116) {
             std::cout << "Half toning" << std::endl;
             // Print the type of the working image
-            std::cout << workingImage.type() << std::endl;
-            std::cout << "Type image " << workingImage.type() << std::endl;
             workingImage = floydSteinbergDitheringGrey(workingImage);
             imshow(WINDOW_NAME, workingImage);
         }
