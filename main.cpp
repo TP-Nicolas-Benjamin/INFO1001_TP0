@@ -7,9 +7,13 @@ using namespace cv;
 
 const String WINDOW_NAME      = "TP1";
 const String WINDOW_HISTOGRAM = "Histogram";
+const String MEDIAN_NAME = "Median";
+int BLUR = 3;
+const String ALPHA_NAME = "Alpha";
+int ALPHA = 20;
 
 // greyScale check the image is grey scale or not, if not then convert it to grey scale
-cv::Mat greyScale(Mat f) {
+Mat greyScale(Mat f) {
     Mat res;
     // Check if the image is already grey scale and print the message
     if (f.channels() == 1) {
@@ -53,7 +57,7 @@ std::vector<double> histogramCumulative(std::vector<double> &histogram) {
 }
 
 // imageHistogram computes the histogram of the image and the cumulative histogram of the image
-cv::Mat imageHistogram(Mat image) {
+Mat imageHistogram(Mat image) {
     std::vector<double> histogramV           = histogram(image);
     std::vector<double> histogramCumulativeV = histogramCumulative(histogramV);
 
@@ -76,7 +80,7 @@ cv::Mat imageHistogram(Mat image) {
 }
 
 // colorHistogram convert the image to HSV color space, split the V channel and compute the histogram of the V channel
-cv::Mat colorHistogram(Mat image) {
+Mat colorHistogram(Mat image) {
     Mat imageHSV;
     cvtColor(image, imageHSV, COLOR_BGR2HSV);
 
@@ -101,14 +105,14 @@ cv::Mat colorHistogram(Mat image) {
     return imageHistogram;
 }
 // equalizeHistogram equalize the histogram of the image and return the image
-cv::Mat equalizeHistogram(Mat image) {
+Mat equalizeHistogram(Mat image) {
     Mat equalizedImage;
     cv::equalizeHist(image, equalizedImage);
     return equalizedImage;
 }
 
 // equalizeColorHistogram equalize the histogram of the V channel and return the image
-cv::Mat equalizeColorHistogram(Mat image) {
+Mat equalizeColorHistogram(Mat image) {
     Mat imageHSV;
     cvtColor(image, imageHSV, COLOR_BGR2HSV);
 
@@ -157,7 +161,7 @@ cv::Vec3f errorColor(cv::Vec3f color1, cv::Vec3f color2) {
                      color2[2] - color1[2] < 0 ? 0 : color2[2] - color1[2]);
 }
 
-cv::Mat floydSteinbergDithering(Mat image, std::vector<cv::Vec3f> colors) {
+Mat floydSteinbergDithering(Mat image, std::vector<cv::Vec3f> colors) {
     // Convert image into matrix of 3 floats channels
     Mat imageFloat;
     image.convertTo(imageFloat, CV_32FC3, 1 / 255.0);
@@ -194,7 +198,7 @@ cv::Mat floydSteinbergDithering(Mat image, std::vector<cv::Vec3f> colors) {
 }
 
 // floydSteinbergDithering dither the matrix using the Floyd-Steinberg algorithm with float values
-cv::Mat floydSteinbergDithering(Mat image) {
+Mat floydSteinbergDithering(Mat image) {
     Mat imageDithered;
     image.copyTo(imageDithered);
     float oldPixelValue;
@@ -249,7 +253,7 @@ cv::Mat floydSteinbergDithering(Mat image) {
 }
 
 // halfToningGreyScale convert the image to grey scale and apply the floyd-steinberg dithering algorithm
-cv::Mat halfToningGreyScale(Mat image) {
+Mat halfToningGreyScale(Mat image) {
     Mat imageGreyScale(image);
 
     // Apply the floyd-steinberg dithering algorithm
@@ -263,7 +267,7 @@ cv::Mat halfToningGreyScale(Mat image) {
 }
 
 // filterM convulve the image with the given kernel
-cv::Mat filterM(Mat image, Mat kernel) {
+Mat filterM(Mat image, Mat kernel) {
     Mat imageFiltered;
 
     cv::filter2D(image, imageFiltered, -1, kernel);
@@ -271,8 +275,24 @@ cv::Mat filterM(Mat image, Mat kernel) {
     return imageFiltered;
 }
 
+Mat filterM(Mat image) {
+    std::cout << "Filter M" << std::endl;
+    Mat kernel = (Mat_<float>(3, 3) << 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0);
+    Mat img = filterM(image, kernel);
+    return img;
+}
+
+Mat contrastEnhancement(Mat image) {
+    std::cout << "Contraste" << std::endl;
+    ALPHA = getTrackbarPos(ALPHA_NAME, WINDOW_NAME);
+    float alphaF = ALPHA / 1000.0;
+    Mat kernel   = (Mat_<float>(3, 3) << 0.0, alphaF * -1.0, 0.0, alphaF * -1.0, 1.0 + alphaF * 4.0, alphaF * -1.0, 0.0, alphaF * -1.0, 0.0);
+    Mat img = filterM(image, kernel);
+    return img;
+}
+
 // medianBlur blur the image with a median filter
-cv::Mat medianBlur(Mat image, int size) {
+Mat medianBlur(Mat image, int size) {
     // Print size
     Mat imageBlurred;
 
@@ -281,14 +301,28 @@ cv::Mat medianBlur(Mat image, int size) {
     return imageBlurred;
 }
 
+Mat medianBlur(Mat image) {
+    std::cout << "Median blur" << std::endl;
+    BLUR = getTrackbarPos(MEDIAN_NAME, WINDOW_NAME);
+    Mat img = medianBlur(image, BLUR);
+    return img;
+}
+
 // laplacianBlur blur the image with a laplacian filter
-cv::Mat laplacianBlur(Mat image, int size) {
+Mat laplacianBlur(Mat image, int size) {
     // Print size
     Mat imageBlurred;
 
     cv::Laplacian(image, imageBlurred, -1, size);
 
     return imageBlurred;
+}
+
+Mat laplacianBlur(Mat image) {
+    std::cout << "Laplacian blur" << std::endl;
+    BLUR = getTrackbarPos(MEDIAN_NAME, WINDOW_NAME);
+    Mat img = laplacianBlur(image, BLUR);
+    return img;
 }
 
 int main(int argc, char **argv) {
@@ -305,16 +339,12 @@ int main(int argc, char **argv) {
     namedWindow(WINDOW_HISTOGRAM);
 
     // trackbar for median blur
-    String medianName = "Median";
-    int blur          = 3;
-    createTrackbar(medianName, WINDOW_NAME, &blur, 10, NULL);
-    setTrackbarPos(medianName, WINDOW_NAME, blur);
+    createTrackbar(MEDIAN_NAME, WINDOW_NAME, &BLUR, 10, NULL);
+    setTrackbarPos(MEDIAN_NAME, WINDOW_NAME, BLUR);
 
     // trackbar for alpha
-    String alphaName = "Alpha";
-    int alpha        = 20;
-    createTrackbar(alphaName, WINDOW_NAME, &alpha, 1000, NULL);
-    setTrackbarPos(alphaName, WINDOW_NAME, alpha);
+    createTrackbar(ALPHA_NAME, WINDOW_NAME, &ALPHA, 1000, NULL);
+    setTrackbarPos(ALPHA_NAME, WINDOW_NAME, ALPHA);
 
     imshow(WINDOW_NAME, initImage);
 
@@ -398,35 +428,27 @@ int main(int argc, char **argv) {
 
         // if key is a, call filterM with the kernel [[1/16,2/16,1/16],[2/16,4/16,2/16],[1/16,2/16,1/16]]
         if (key == 97) {
-            std::cout << "Filter M" << std::endl;
-            Mat kernel   = (Mat_<float>(3, 3) << 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0);
-            workingImage = filterM(workingImage, kernel);
+            workingImage = filterM(workingImage);
             imshow(WINDOW_NAME, workingImage);
         }
 
-        // if key is b, call medianBlur with size from trackbar medianName
+        // if key is b, call medianBlur with size from trackbar MEDIAN_NAME
         if (key == 98) {
-            std::cout << "Median blur" << std::endl;
-            blur         = getTrackbarPos(medianName, WINDOW_NAME);
-            workingImage = medianBlur(workingImage, blur);
+            workingImage = medianBlur(workingImage);
             imshow(WINDOW_NAME, workingImage);
         }
 
         // if o, call filterM with the kernel [[0,1,0],[1,-4,1],[0,1,0]]
         if (key == 111) {
-            std::cout << "Contraste" << std::endl;
-            alpha        = getTrackbarPos(alphaName, WINDOW_NAME);
-            float alphaF = alpha / 1000.0;
-            Mat kernel   = (Mat_<float>(3, 3) << 0.0, alphaF * -1.0, 0.0, alphaF * -1.0, 1.0 + alphaF * 4.0, alphaF * -1.0, 0.0, alphaF * -1.0, 0.0);
-            workingImage = filterM(workingImage, kernel);
+            workingImage = contrastEnhancement(workingImage);
             imshow(WINDOW_NAME, workingImage);
         }
 
-        // if key is l, call laplacianBlur with size from trackbar medianName
+        // if key is l, call laplacianBlur with size from trackbar MEDIAN_NAME
         if (key == 108) {
             std::cout << "Laplacian blur" << std::endl;
-            blur         = getTrackbarPos(medianName, WINDOW_NAME);
-            workingImage = laplacianBlur(workingImage, blur);
+            BLUR         = getTrackbarPos(MEDIAN_NAME, WINDOW_NAME);
+            workingImage = laplacianBlur(workingImage, BLUR);
             imshow(WINDOW_NAME, workingImage);
         }
 
@@ -440,6 +462,8 @@ int main(int argc, char **argv) {
             Mat (*histogramFunction)(Mat) = &colorHistogram;
 
             bool needGreyScale = false;
+            bool isGreyScale = false;
+            int blurLevel = 0;
 
             for (;;) {
                 camera >> frameImage;
@@ -447,6 +471,11 @@ int main(int argc, char **argv) {
 
                     if (needGreyScale) {
                         frameImage = greyScale(frameImage);
+                    }
+                    if (blurLevel > 0) {
+                        for (int i = 0; i < blurLevel; i++) {
+                            frameImage = imageFunction(frameImage);
+                        }
                     }
                     frameImage = imageFunction(frameImage);
                 }
@@ -460,43 +489,108 @@ int main(int argc, char **argv) {
 
                 int key_code   = waitKey(30);
                 int ascii_code = key_code & 0xff;
-                std::cout << "ascii code : " << ascii_code << std::endl;
 
                 if (ascii_code == 'g') {
                     std::cout << "g key pressed" << std::endl;
                     needGreyScale     = false;
+                    isGreyScale       = true;
+                    blurLevel = 0;
                     imageFunction     = &greyScale;
                     histogramFunction = &imageHistogram;
                 }
                 if (ascii_code == 'c') {
                     std::cout << "c key pressed" << std::endl;
                     needGreyScale     = false;
+                    isGreyScale       = false;
+                    blurLevel = 0;
                     imageFunction     = NULL;
                     histogramFunction = &colorHistogram;
                 }
                 if (ascii_code == 'e') {
                     std::cout << "e key pressed" << std::endl;
                     needGreyScale     = true;
+                    isGreyScale       = true;
+                    blurLevel = 0;
                     imageFunction     = &equalizeHistogram;
                     histogramFunction = &imageHistogram;
                 }
                 if (ascii_code == 'f') {
                     std::cout << "f key pressed" << std::endl;
                     needGreyScale     = false;
+                    isGreyScale       = false;
+                    blurLevel = 0;
                     imageFunction     = &equalizeColorHistogram;
                     histogramFunction = &colorHistogram;
                 }
                 if (ascii_code == 't') {
                     std::cout << "t key pressed" << std::endl;
                     needGreyScale     = true;
+                    isGreyScale       = true;
                     imageFunction     = &floydSteinbergDithering;
                     histogramFunction = &imageHistogram;
                 }
                 if (ascii_code == 'y') {
                     std::cout << "y key pressed" << std::endl;
                     needGreyScale     = false;
+                    isGreyScale       = false;
+                    blurLevel = 0;
                     imageFunction     = &floydSteinbergDithering;
                     histogramFunction = &colorHistogram;
+                }
+                if (ascii_code == 'a') {
+                    std::cout << "a key pressed" << std::endl;
+                    imageFunction     = &filterM;
+                    blurLevel++;
+                    if (isGreyScale) {
+                        histogramFunction = &imageHistogram;
+                        needGreyScale     = true;
+                    }
+                    else {
+                        histogramFunction = &colorHistogram;
+                        needGreyScale     = false;
+                    }
+                }
+                if (ascii_code == 'b') {
+                    std::cout << "b key pressed" << std::endl;
+                    needGreyScale     = false;
+                    imageFunction     = &medianBlur;
+                    blurLevel++;
+                    if (isGreyScale) {
+                        histogramFunction = &imageHistogram;
+                        needGreyScale     = true;
+                    }
+                    else {
+                        histogramFunction = &colorHistogram;
+                        needGreyScale     = false;
+                    }
+                }
+                if (ascii_code == 'o') {
+                    std::cout << "o key pressed" << std::endl;
+                    needGreyScale     = false;
+                    imageFunction     = &contrastEnhancement;
+                    blurLevel++;
+                    if (isGreyScale) {
+                        histogramFunction = &imageHistogram;
+                        needGreyScale     = true;
+                    }
+                    else {
+                        histogramFunction = &colorHistogram;
+                        needGreyScale     = false;
+                    }
+                }
+                if (ascii_code == 'l') {
+                    std::cout << "l key pressed" << std::endl;
+                    needGreyScale     = false;
+                    imageFunction     = &laplacianBlur;
+                    blurLevel++;
+                    if (isGreyScale) {
+                        histogramFunction = &imageHistogram;
+                        needGreyScale     = true;
+                    }
+                    else {
+                        histogramFunction = &colorHistogram;
+                        needGreyScale     = false;
+                    }
                 }
                 if (key_code == 113)
                     break;
