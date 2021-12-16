@@ -38,14 +38,6 @@ std::vector<double> histogram(Mat image) {
         histogram[i] = histogram[i] / (image.rows * image.cols) * 100;
     }
 
-    // Print the size of the image
-    std::cout << "Size of the image: " << image.size() << std::endl;
-
-    // Print each element of the histogram
-    for (int i = 0; i < 256; i++) {
-        std::cout << "histogram[" << i << "]=" << histogram[i] << std::endl;
-    }
-
     return histogram;
 }
 
@@ -55,16 +47,6 @@ std::vector<double> histogramCumulative(std::vector<double> &histogram) {
     histogramCumulative[0] = histogram[0];
     for (int i = 1; i < 256; i++) {
         histogramCumulative[i] = histogramCumulative[i - 1] + histogram[i];
-    }
-    // Print the size of the image
-    std::cout << "Size of the image: " << histogramCumulative.size() << std::endl;
-
-    // Print the last element of the histogram
-    std::cout << "Last element of the histogram: " << histogramCumulative[255] << std::endl;
-
-    // Print each element of the histogram
-    for (int i = 0; i < 256; i++) {
-        std::cout << "histogramCumulative[" << i << "]=" << histogramCumulative[i] << std::endl;
     }
 
     return histogramCumulative;
@@ -77,7 +59,6 @@ cv::Mat imageHistogram(Mat image) {
 
     // Image size
     int size = image.size().height * image.size().width;
-    std::cout << "Size of the image: " << size << std::endl;
 
     // Create the image
     Mat imageHistogram(256, 524, CV_8UC1, Scalar(255));
@@ -224,8 +205,6 @@ cv::Mat floydSteinbergDithering(Mat image) {
     std::vector<Mat> channels;
     cv::split(imageDithered, channels);
 
-    // Print channel size
-    std::cout << "Size of the channel: " << channels.size() << std::endl;
     // For each channel
     for (int i = 0; i < channels.size(); i++) {
         channels[i].convertTo(channels[i], CV_32FC1);
@@ -295,10 +274,19 @@ cv::Mat filterM(Mat image, Mat kernel) {
 // medianBlur blur the image with a median filter
 cv::Mat medianBlur(Mat image, int size) {
     // Print size
-    std::cout << "Size of the median filter: " << size << std::endl;
     Mat imageBlurred;
 
     cv::medianBlur(image, imageBlurred, size);
+
+    return imageBlurred;
+}
+
+// laplacianBlur blur the image with a laplacian filter
+cv::Mat laplacianBlur(Mat image, int size) {
+    // Print size
+    Mat imageBlurred;
+
+    cv::Laplacian(image, imageBlurred, -1, size);
 
     return imageBlurred;
 }
@@ -316,15 +304,17 @@ int main(int argc, char **argv) {
     namedWindow(WINDOW_NAME);
     namedWindow(WINDOW_HISTOGRAM);
 
-    // String trackbarName = "Trackbar";
-    // createTrackbar(trackbarName, WINDOW_NAME, nullptr, 255, NULL);
-    // setTrackbarPos(trackbarName, WINDOW_NAME, value);
-
     // trackbar for median blur
     String medianName = "Median";
     int blur          = 3;
     createTrackbar(medianName, WINDOW_NAME, &blur, 10, NULL);
     setTrackbarPos(medianName, WINDOW_NAME, blur);
+
+    // trackbar for alpha
+    String alphaName = "Alpha";
+    int alpha        = 20;
+    createTrackbar(alphaName, WINDOW_NAME, &alpha, 1000, NULL);
+    setTrackbarPos(alphaName, WINDOW_NAME, alpha);
 
     imshow(WINDOW_NAME, initImage);
 
@@ -406,8 +396,6 @@ int main(int argc, char **argv) {
             imshow(WINDOW_NAME, workingImage);
         }
 
-        // If the key is b
-
         // if key is a, call filterM with the kernel [[1/16,2/16,1/16],[2/16,4/16,2/16],[1/16,2/16,1/16]]
         if (key == 97) {
             std::cout << "Filter M" << std::endl;
@@ -424,18 +412,36 @@ int main(int argc, char **argv) {
             imshow(WINDOW_NAME, workingImage);
         }
 
+        // if x, call filterM with the kernel [[0,1,0],[1,-4,1],[0,1,0]]
+        if (key == 120) {
+            std::cout << "Contraste" << std::endl;
+            alpha        = getTrackbarPos(alphaName, WINDOW_NAME);
+            float alphaF = alpha / 1000.0;
+            Mat kernel   = (Mat_<float>(3, 3) << 0.0, alphaF * -1.0, 0.0, alphaF * -1.0, 1.0 + alphaF * 4.0, alphaF * -1.0, 0.0, alphaF * -1.0, 0.0);
+            workingImage = filterM(workingImage, kernel);
+            imshow(WINDOW_NAME, workingImage);
+        }
+
+        // if key is l, call laplacianBlur with size from trackbar medianName
+        if (key == 108) {
+            std::cout << "Laplacian blur" << std::endl;
+            blur         = getTrackbarPos(medianName, WINDOW_NAME);
+            workingImage = laplacianBlur(workingImage, blur);
+            imshow(WINDOW_NAME, workingImage);
+        }
+
         // If the key is SPACE, take a picture from the camera
         if (key == 32) {
-            if(!camera.isOpened()) return -1;
+            if (!camera.isOpened())
+                return -1;
             Mat frameImage, frameHistogram;
-            
-            Mat (*imageFunction)(Mat) = NULL;
+
+            Mat (*imageFunction)(Mat)     = NULL;
             Mat (*histogramFunction)(Mat) = &colorHistogram;
 
             bool needGreyScale = false;
 
-            for(;;)
-            {
+            for (;;) {
                 camera >> frameImage;
                 if (imageFunction != NULL) {
 
@@ -452,47 +458,48 @@ int main(int argc, char **argv) {
                 imshow(WINDOW_NAME, frameImage);
                 imshow(WINDOW_HISTOGRAM, frameHistogram);
 
-                int   key_code = waitKey(30);
-                int ascii_code = key_code & 0xff; 
+                int key_code   = waitKey(30);
+                int ascii_code = key_code & 0xff;
                 std::cout << "ascii code : " << ascii_code << std::endl;
 
-                if( ascii_code == 'g') {
+                if (ascii_code == 'g') {
                     std::cout << "g key pressed" << std::endl;
-                    needGreyScale = false;
-                    imageFunction = &greyScale;
+                    needGreyScale     = false;
+                    imageFunction     = &greyScale;
                     histogramFunction = &imageHistogram;
                 }
-                if( ascii_code == 'c') {
+                if (ascii_code == 'c') {
                     std::cout << "c key pressed" << std::endl;
-                    needGreyScale = false;
-                    imageFunction = NULL;
+                    needGreyScale     = false;
+                    imageFunction     = NULL;
                     histogramFunction = &colorHistogram;
                 }
-                if( ascii_code == 'e') {
+                if (ascii_code == 'e') {
                     std::cout << "e key pressed" << std::endl;
-                    needGreyScale = true;
-                    imageFunction = &equalizeHistogram;
+                    needGreyScale     = true;
+                    imageFunction     = &equalizeHistogram;
                     histogramFunction = &imageHistogram;
                 }
-                if( ascii_code == 'f') {
+                if (ascii_code == 'f') {
                     std::cout << "f key pressed" << std::endl;
-                    needGreyScale = false;
-                    imageFunction = &equalizeColorHistogram;
+                    needGreyScale     = false;
+                    imageFunction     = &equalizeColorHistogram;
                     histogramFunction = &colorHistogram;
                 }
-                if( ascii_code == 't') {
+                if (ascii_code == 't') {
                     std::cout << "t key pressed" << std::endl;
-                    needGreyScale = true;
-                    imageFunction = &floydSteinbergDithering;
+                    needGreyScale     = true;
+                    imageFunction     = &floydSteinbergDithering;
                     histogramFunction = &imageHistogram;
                 }
-                if( ascii_code == 'y') {
+                if (ascii_code == 'y') {
                     std::cout << "y key pressed" << std::endl;
-                    needGreyScale = false;
-                    imageFunction = &floydSteinbergDithering;
+                    needGreyScale     = false;
+                    imageFunction     = &floydSteinbergDithering;
                     histogramFunction = &colorHistogram;
                 }
-                if( key_code == 113) break;
+                if (key_code == 113)
+                    break;
             }
             imshow(WINDOW_NAME, workingImage);
         }
