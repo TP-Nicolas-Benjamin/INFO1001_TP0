@@ -494,7 +494,6 @@ int main(int argc, char **argv) {
                 }
                 if( key_code == 113) break;
             }
-            camera >> workingImage;
             imshow(WINDOW_NAME, workingImage);
         }
 
