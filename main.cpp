@@ -148,10 +148,74 @@ cv::Mat equalizeColorHistogram(Mat image) {
     return equalizedImage;
 }
 
-// floydSteinbergDitheringGrey dither the matrix using the Floyd-Steinberg algorithm with float values
-cv::Mat floydSteinbergDitheringGrey(Mat image) {
-    Mat imageDithered(image);
+// distanceColor return the distance between 2 cv::Vec3f
+float distanceColor(cv::Vec3f color1, cv::Vec3f color2) {
+    return sqrt(pow(color2[0] - color1[0], 2) +
+                pow(color2[1] - color1[1], 2) +
+                pow(color2[2] - color1[2], 2));
+}
 
+// bestColor return the closest color index to the given color in the given vector of colors
+int bestColor(cv::Vec3f color, std::vector<cv::Vec3f> colors) {
+    float minDistance = distanceColor(color, colors[0]);
+    int minIndex      = 0;
+    for (int i = 1; i < colors.size(); i++) {
+        float distance = distanceColor(color, colors[i]);
+        if (distance < minDistance) {
+            minDistance = distance;
+            minIndex    = i;
+        }
+    }
+    return minIndex;
+}
+
+// errorColor return a color vector the error between the 2 given color vectors
+cv::Vec3f errorColor(cv::Vec3f color1, cv::Vec3f color2) {
+    return cv::Vec3f(color2[0] - color1[0] < 0 ? 0 : color2[0] - color1[0],
+                     color2[1] - color1[1] < 0 ? 0 : color2[1] - color1[1],
+                     color2[2] - color1[2] < 0 ? 0 : color2[2] - color1[2]);
+}
+
+cv::Mat floydSteinbergDithering(Mat image, std::vector<cv::Vec3f> colors) {
+    // Convert image into matrix of 3 floats channels
+    Mat imageFloat;
+    image.convertTo(imageFloat, CV_32FC3, 1 / 255.0);
+    // for each pixel
+    for (int y = 0; y < imageFloat.rows; y++) {
+        for (int x = 0; x < imageFloat.cols; x++) {
+            // Get the current pixel
+            cv::Vec3f pixel = imageFloat.at<cv::Vec3f>(y, x);
+            // Find the closest color
+            int closestColorIndex = bestColor(pixel, colors);
+            // Compute the error
+            cv::Vec3f error = errorColor(pixel, colors[closestColorIndex]);
+            // Set the pixel to the closest color
+            imageFloat.at<cv::Vec3f>(y, x) = colors[closestColorIndex];
+            // Apply the error to the next pixel
+            if (y + 1 < imageFloat.rows) {
+                imageFloat.at<cv::Vec3f>(y + 1, x) += error * 5.0 / 16.0;
+            }
+            if (x + 1 < imageFloat.cols) {
+                imageFloat.at<cv::Vec3f>(y, x + 1) += error * 7.0 / 16.0;
+            }
+            if (y + 1 < imageFloat.rows && x + 1 < imageFloat.cols) {
+                imageFloat.at<cv::Vec3f>(y + 1, x + 1) += error * 1.0 / 16.0;
+            }
+            if (y + 1 < imageFloat.rows && x - 1 >= 0) {
+                imageFloat.at<cv::Vec3f>(y + 1, x - 1) += error * 3.0 / 16.0;
+            }
+        }
+    }
+    // Convert the image back to 8 bits
+    Mat image8bits;
+    imageFloat.convertTo(image8bits, CV_8UC3, 255);
+    return image8bits;
+}
+
+// floydSteinbergDithering dither the matrix using the Floyd-Steinberg algorithm with float values
+cv::Mat floydSteinbergDithering(Mat image) {
+    Mat imageDithered;
+    image.copyTo(imageDithered);
     float oldPixelValue;
     float newPixelValue;
     float errorValue;
@@ -241,7 +305,8 @@ int main(int argc, char **argv) {
     int key = waitKeyEx(50);
 
     // All images variables
-    Mat workingImage(initImage);
+    Mat workingImage;
+    initImage.copyTo(workingImage);
     Mat histogramImage;
 
     // Camera
@@ -295,7 +360,21 @@ int main(int argc, char **argv) {
         if (key == 116) {
             std::cout << "Half toning" << std::endl;
             // Print the type of the working image
-            workingImage = floydSteinbergDitheringGrey(workingImage);
+            workingImage = floydSteinbergDithering(workingImage);
+            imshow(WINDOW_NAME, workingImage);
+        }
+
+        // If the key is y, call floydSteinbergDithering with vector
+        if (key == 121) {
+            std::cout << "Floyd-Steinberg dithering" << std::endl;
+            // Vector containing cyan, magenta, yellow, white and black
+            std::vector<cv::Vec3f> colors = {
+                cv::Vec3f(1.0, 1.0, 1.0),
+                cv::Vec3f(1.0, 1.0, 0.0),
+                cv::Vec3f(1.0, 0.0, 1.0),
+                cv::Vec3f(0.0, 1.0, 1.0),
+                cv::Vec3f(0.0, 0.0, 0.0)};
+            workingImage = floydSteinbergDithering(workingImage, colors);
             imshow(WINDOW_NAME, workingImage);
         }
 
