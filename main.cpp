@@ -313,7 +313,7 @@ int main(int argc, char **argv) {
     cv::VideoCapture camera(0);
 
     while (true) {
-        // Print the key code
+        // Get the key code
         key = waitKeyEx(500);
 
         // If the key is ESC, break the loop
@@ -380,7 +380,74 @@ int main(int argc, char **argv) {
 
         // If the key is SPACE, take a picture from the camera
         if (key == 32) {
-            std::cout << "Take a picture" << std::endl;
+            if(!camera.isOpened()) return -1;
+            Mat frameImage, frameHistogram;
+            
+            Mat (*imageFunction)(Mat) = NULL;
+            Mat (*histogramFunction)(Mat) = &colorHistogram;
+
+            bool needGreyScale = false;
+
+            for(;;)
+            {
+                camera >> frameImage;
+                if (imageFunction != NULL) {
+
+                    if (needGreyScale) {
+                        frameImage = greyScale(frameImage);
+                    }
+                    frameImage = imageFunction(frameImage);
+                }
+
+                frameImage.copyTo(frameHistogram);
+                if (histogramFunction != NULL) {
+                    frameHistogram = histogramFunction(frameHistogram);
+                }
+                imshow(WINDOW_NAME, frameImage);
+                imshow(WINDOW_HISTOGRAM, frameHistogram);
+
+                int   key_code = waitKey(30);
+                int ascii_code = key_code & 0xff; 
+                std::cout << "ascii code : " << ascii_code << std::endl;
+
+                if( ascii_code == 'g') {
+                    std::cout << "g key pressed" << std::endl;
+                    needGreyScale = false;
+                    imageFunction = &greyScale;
+                    histogramFunction = &imageHistogram;
+                }
+                if( ascii_code == 'c') {
+                    std::cout << "c key pressed" << std::endl;
+                    needGreyScale = false;
+                    imageFunction = NULL;
+                    histogramFunction = &colorHistogram;
+                }
+                if( ascii_code == 'e') {
+                    std::cout << "e key pressed" << std::endl;
+                    needGreyScale = true;
+                    imageFunction = &equalizeHistogram;
+                    histogramFunction = &imageHistogram;
+                }
+                if( ascii_code == 'f') {
+                    std::cout << "f key pressed" << std::endl;
+                    needGreyScale = false;
+                    imageFunction = &equalizeColorHistogram;
+                    histogramFunction = &colorHistogram;
+                }
+                if( ascii_code == 't') {
+                    std::cout << "t key pressed" << std::endl;
+                    needGreyScale = true;
+                    imageFunction = &floydSteinbergDithering;
+                    histogramFunction = &imageHistogram;
+                }
+                if( ascii_code == 'y') {
+                    std::cout << "y key pressed" << std::endl;
+                    needGreyScale = false;
+                    imageFunction = &floydSteinbergDithering;
+                    histogramFunction = &colorHistogram;
+                }
+                if( key_code == 113) break;
+            }
             camera >> workingImage;
             imshow(WINDOW_NAME, workingImage);
         }
