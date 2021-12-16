@@ -412,8 +412,8 @@ int main(int argc, char **argv) {
             imshow(WINDOW_NAME, workingImage);
         }
 
-        // if x, call filterM with the kernel [[0,1,0],[1,-4,1],[0,1,0]]
-        if (key == 120) {
+        // if o, call filterM with the kernel [[0,1,0],[1,-4,1],[0,1,0]]
+        if (key == 111) {
             std::cout << "Contraste" << std::endl;
             alpha        = getTrackbarPos(alphaName, WINDOW_NAME);
             float alphaF = alpha / 1000.0;
