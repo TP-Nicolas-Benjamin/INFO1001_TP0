@@ -283,22 +283,49 @@ cv::Mat halfToningGreyScale(Mat image) {
     return imageGreyScale;
 }
 
+// filterM convulve the image with the given kernel
+cv::Mat filterM(Mat image, Mat kernel) {
+    Mat imageFiltered;
+
+    cv::filter2D(image, imageFiltered, -1, kernel);
+
+    return imageFiltered;
+}
+
+// medianBlur blur the image with a median filter
+cv::Mat medianBlur(Mat image, int size) {
+    // Print size
+    std::cout << "Size of the median filter: " << size << std::endl;
+    Mat imageBlurred;
+
+    cv::medianBlur(image, imageBlurred, size);
+
+    return imageBlurred;
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         std::cout << "Usage: " << argv[0] << " <image_path>" << std::endl;
         return -1;
     }
 
-    int value           = 128;
-    String trackbarName = "Trackbar";
-    String imagePath    = argv[1];
+    String imagePath = argv[1];
 
     Mat initImage = imread(imagePath);
 
     namedWindow(WINDOW_NAME);
     namedWindow(WINDOW_HISTOGRAM);
-    createTrackbar(trackbarName, WINDOW_NAME, nullptr, 255, NULL);
-    setTrackbarPos(trackbarName, WINDOW_NAME, value);
+
+    // String trackbarName = "Trackbar";
+    // createTrackbar(trackbarName, WINDOW_NAME, nullptr, 255, NULL);
+    // setTrackbarPos(trackbarName, WINDOW_NAME, value);
+
+    // trackbar for median blur
+    String medianName = "Median";
+    int blur          = 3;
+    createTrackbar(medianName, WINDOW_NAME, &blur, 10, NULL);
+    setTrackbarPos(medianName, WINDOW_NAME, blur);
+
     imshow(WINDOW_NAME, initImage);
 
     // Wait 50ms for a keystroke and get the key code
@@ -307,6 +334,7 @@ int main(int argc, char **argv) {
     // All images variables
     Mat workingImage;
     initImage.copyTo(workingImage);
+
     Mat histogramImage;
 
     // Camera
@@ -375,6 +403,24 @@ int main(int argc, char **argv) {
                 cv::Vec3f(0.0, 1.0, 1.0),
                 cv::Vec3f(0.0, 0.0, 0.0)};
             workingImage = floydSteinbergDithering(workingImage, colors);
+            imshow(WINDOW_NAME, workingImage);
+        }
+
+        // If the key is b
+
+        // if key is a, call filterM with the kernel [[1/16,2/16,1/16],[2/16,4/16,2/16],[1/16,2/16,1/16]]
+        if (key == 97) {
+            std::cout << "Filter M" << std::endl;
+            Mat kernel   = (Mat_<float>(3, 3) << 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0);
+            workingImage = filterM(workingImage, kernel);
+            imshow(WINDOW_NAME, workingImage);
+        }
+
+        // if key is b, call medianBlur with size from trackbar medianName
+        if (key == 98) {
+            std::cout << "Median blur" << std::endl;
+            blur         = getTrackbarPos(medianName, WINDOW_NAME);
+            workingImage = medianBlur(workingImage, blur);
             imshow(WINDOW_NAME, workingImage);
         }
 
