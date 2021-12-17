@@ -7,10 +7,15 @@ using namespace cv;
 
 const String WINDOW_NAME      = "TP1";
 const String WINDOW_HISTOGRAM = "Histogram";
-const String MEDIAN_NAME      = "Median";
-int BLUR                      = 3;
-const String ALPHA_NAME       = "Alpha";
-int ALPHA                     = 20;
+
+const String MEDIAN_NAME = "Median";
+int BLUR                 = 3;
+
+const String ALPHA_NAME = "Alpha";
+int ALPHA               = 20;
+
+const String DELTA_NAME = "Delta";
+int DELTA               = 20;
 
 // greyScale check the image is grey scale or not, if not then convert it to grey scale
 Mat greyScale(Mat f) {
@@ -326,16 +331,30 @@ Mat laplacianBlur(Mat image) {
 
 Mat sorbelX(Mat image) {
     std::cout << "Sorbel X" << std::endl;
-    Mat kernel = (Mat_<float>(3, 3) << -1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0);
+    Mat kernel = (Mat_<float>(3, 3) << -1.0 / 4.0, 0.0, 1.0 / 4.0, -2.0 / 4.0, 0.0, 2.0 / 4.0, -1.0 / 4.0, 0.0, 1.0 / 4.0);
     Mat img    = filter(image, kernel, 128.0);
     return img;
 }
 
 Mat sorbelY(Mat image) {
     std::cout << "Sorbel Y" << std::endl;
-    Mat kernel = (Mat_<float>(3, 3) << -1.0, -2.0, -1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 1.0);
+    Mat kernel = (Mat_<float>(3, 3) << -1.0 / 4.0, -2.0 / 4.0, -1.0 / 4.0, 0.0, 0.0, 0.0, 1.0 / 4.0, 2.0 / 4.0, 1.0 / 4.0);
     Mat img    = filter(image, kernel, 128.0);
     return img;
+}
+
+Mat gradient(Mat image) {
+    std::cout << "Gradient" << std::endl;
+    Mat grad = Mat(image.size(), CV_8UC1, Scalar(0.0));
+    Mat imgX = sorbelX(image);
+    Mat imgY = sorbelY(image);
+    // for each pixel in grad
+    for (int i = 0; i < grad.rows; i++) {
+        for (int j = 0; j < grad.cols; j++) {
+            grad.at<uchar>(i, j) = distanceColor(imgX.at<uchar>(i, j), imgY.at<uchar>(i, j));
+        }
+    }
+    return grad;
 }
 
 int main(int argc, char **argv) {
@@ -358,6 +377,10 @@ int main(int argc, char **argv) {
     // trackbar for alpha
     createTrackbar(ALPHA_NAME, WINDOW_NAME, &ALPHA, 1000, NULL);
     setTrackbarPos(ALPHA_NAME, WINDOW_NAME, ALPHA);
+
+    // trackbar for delta
+    createTrackbar(DELTA_NAME, WINDOW_NAME, &DELTA, 255, NULL);
+    setTrackbarPos(DELTA_NAME, WINDOW_NAME, DELTA);
 
     imshow(WINDOW_NAME, initImage);
 
@@ -425,8 +448,8 @@ int main(int argc, char **argv) {
             imshow(WINDOW_NAME, workingImage);
         }
 
-        // If the key is y, call floydSteinbergDithering with vector
-        if (key == 121) {
+        // If the key is u, call floydSteinbergDithering with vector
+        if (key == 117) {
             std::cout << "Floyd-Steinberg dithering" << std::endl;
             // Vector containing cyan, magenta, yellow, white and black
             std::vector<cv::Vec3f> colors = {
@@ -476,6 +499,13 @@ int main(int argc, char **argv) {
             std::cout << "Laplacian blur" << std::endl;
             BLUR         = getTrackbarPos(MEDIAN_NAME, WINDOW_NAME);
             workingImage = laplacianBlur(workingImage, BLUR);
+            imshow(WINDOW_NAME, workingImage);
+        }
+
+        // if key is d, call gradent
+        if (key == 100) {
+            std::cout << "Gradient" << std::endl;
+            workingImage = gradient(workingImage);
             imshow(WINDOW_NAME, workingImage);
         }
 
@@ -565,8 +595,8 @@ int main(int argc, char **argv) {
                     histogramFunction = &imageHistogram;
                 }
 
-                if (ascii_code == 'y') {
-                    std::cout << "y key pressed" << std::endl;
+                if (ascii_code == 'u') {
+                    std::cout << "u key pressed" << std::endl;
                     needGreyScale     = false;
                     isGreyScale       = false;
                     blurLevel         = 0;
@@ -635,6 +665,32 @@ int main(int argc, char **argv) {
                     std::cout << "x key pressed" << std::endl;
                     needGreyScale = false;
                     imageFunction = &sorbelX;
+                    if (isGreyScale) {
+                        histogramFunction = &imageHistogram;
+                        needGreyScale     = true;
+                    } else {
+                        histogramFunction = &colorHistogram;
+                        needGreyScale     = false;
+                    }
+                }
+
+                if (ascii_code == 'y') {
+                    std::cout << "y key pressed" << std::endl;
+                    needGreyScale = false;
+                    imageFunction = &sorbelY;
+                    if (isGreyScale) {
+                        histogramFunction = &imageHistogram;
+                        needGreyScale     = true;
+                    } else {
+                        histogramFunction = &colorHistogram;
+                        needGreyScale     = false;
+                    }
+                }
+
+                if (ascii_code == 'd') {
+                    std::cout << "d key pressed" << std::endl;
+                    needGreyScale = false;
+                    imageFunction = &gradient;
                     if (isGreyScale) {
                         histogramFunction = &imageHistogram;
                         needGreyScale     = true;
