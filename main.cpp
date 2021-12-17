@@ -372,7 +372,7 @@ bool isSurroundingPixelSameSign(Mat image, int row, int col) {
 }
 
 Mat marrHildreth(Mat image) {
-    std::cout << "Marr Hildreth" << std::endl;
+    // std::cout << "Marr Hildreth" << std::endl;
     Mat grad = gradient(image);
 
     Mat laplacian;
@@ -630,7 +630,6 @@ int main(int argc, char **argv) {
                 int ascii_code = key_code & 0xff;
 
                 if (ascii_code == 'g') {
-                    std::cout << "g key pressed" << std::endl;
                     needGreyScale     = false;
                     isGreyScale       = true;
                     blurLevel         = 0;
@@ -638,7 +637,6 @@ int main(int argc, char **argv) {
                     histogramFunction = &imageHistogram;
                 }
                 if (ascii_code == 'c') {
-                    std::cout << "c key pressed" << std::endl;
                     needGreyScale     = false;
                     isGreyScale       = false;
                     blurLevel         = 0;
@@ -646,7 +644,6 @@ int main(int argc, char **argv) {
                     histogramFunction = &colorHistogram;
                 }
                 if (ascii_code == 'e') {
-                    std::cout << "e key pressed" << std::endl;
                     needGreyScale     = true;
                     isGreyScale       = true;
                     blurLevel         = 0;
@@ -654,7 +651,6 @@ int main(int argc, char **argv) {
                     histogramFunction = &imageHistogram;
                 }
                 if (ascii_code == 'f') {
-                    std::cout << "f key pressed" << std::endl;
                     needGreyScale     = false;
                     isGreyScale       = false;
                     blurLevel         = 0;
@@ -663,7 +659,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 't') {
-                    std::cout << "t key pressed" << std::endl;
                     needGreyScale     = true;
                     isGreyScale       = true;
                     imageFunction     = &floydSteinbergDithering;
@@ -671,7 +666,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'u') {
-                    std::cout << "u key pressed" << std::endl;
                     needGreyScale     = false;
                     isGreyScale       = false;
                     blurLevel         = 0;
@@ -680,7 +674,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'a') {
-                    std::cout << "a key pressed" << std::endl;
                     imageFunction = &filtreMoyenneur;
                     blurLevel++;
                     if (isGreyScale) {
@@ -693,7 +686,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'b') {
-                    std::cout << "b key pressed" << std::endl;
                     needGreyScale = false;
                     imageFunction = &medianBlur;
                     blurLevel++;
@@ -707,7 +699,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'o') {
-                    std::cout << "o key pressed" << std::endl;
                     needGreyScale = false;
                     imageFunction = &contrastEnhancement;
                     blurLevel++;
@@ -721,7 +712,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'l') {
-                    std::cout << "l key pressed" << std::endl;
                     imageFunction = &laplacianBlur;
                     blurLevel++;
                     if (isGreyScale) {
@@ -734,7 +724,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'x') {
-                    std::cout << "x key pressed" << std::endl;
                     imageFunction = &sorbelX;
                     if (isGreyScale) {
                         histogramFunction = &imageHistogram;
@@ -746,7 +735,6 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'y') {
-                    std::cout << "y key pressed" << std::endl;
                     imageFunction = &sorbelY;
                     if (isGreyScale) {
                         histogramFunction = &imageHistogram;
@@ -758,9 +746,14 @@ int main(int argc, char **argv) {
                 }
 
                 if (ascii_code == 'd') {
-                    std::cout << "d key pressed" << std::endl;
                     needGreyScale     = true;
                     imageFunction = &gradient;
+                    histogramFunction = &imageHistogram;
+                }
+
+                if (ascii_code == 'm') {
+                    needGreyScale = true;
+                    imageFunction = &marrHildreth;
                     histogramFunction = &imageHistogram;
                 }
 
