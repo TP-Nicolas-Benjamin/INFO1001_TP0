@@ -14,8 +14,8 @@ int BLUR                 = 3;
 const String ALPHA_NAME = "Alpha";
 int ALPHA               = 20;
 
-const String DELTA_NAME = "Delta";
-int DELTA               = 20;
+const String T_NAME = "Treshold";
+int T               = 0;
 
 // greyScale check the image is grey scale or not, if not then convert it to grey scale
 Mat greyScale(Mat f) {
@@ -357,6 +357,40 @@ Mat gradient(Mat image) {
     return grad;
 }
 
+// isSurroundingPixelSameSign if the surrounding pixels of a given pixel are all the same sign
+bool isSurroundingPixelSameSign(Mat image, int row, int col) {
+    if (row != 0 && col != 0 && row != image.rows - 1 && col != image.cols - 1) {
+        if (
+            (image.at<uchar>(row - 1, col - 1) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row - 1, col - 1) < 0 && image.at<uchar>(row, col) < 0) && (image.at<uchar>(row - 1, col) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row - 1, col) < 0 && image.at<uchar>(row, col) < 0) && (image.at<uchar>(row - 1, col + 1) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row - 1, col + 1) < 0 && image.at<uchar>(row, col) < 0) && (image.at<uchar>(row, col - 1) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row, col - 1) < 0 && image.at<uchar>(row, col) < 0) && (image.at<uchar>(row, col + 1) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row, col + 1) < 0 && image.at<uchar>(row, col) < 0) && (image.at<uchar>(row + 1, col - 1) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row + 1, col - 1) < 0 && image.at<uchar>(row, col) < 0) && (image.at<uchar>(row + 1, col) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row + 1, col) < 0 && image.at<uchar>(row, col) < 0) && (image.at<uchar>(row + 1, col + 1) > 0 && image.at<uchar>(row, col) > 0) || (image.at<uchar>(row + 1, col + 1) < 0 && image.at<uchar>(row, col) < 0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Mat marrHildreth(Mat image) {
+    std::cout << "Marr Hildreth" << std::endl;
+    Mat grad = gradient(image);
+
+    Mat laplacian;
+    cv::Laplacian(image, laplacian, -1, 1);
+
+    Mat img(image.size(), CV_8UC1, Scalar(255));
+
+    // for each pixel in img
+    for (int i = 0; i < img.rows; i++) {
+        for (int j = 0; j < img.cols; j++) {
+            // if the pixel is in the image is greater or equal to the gradient and
+            // the surrounding pixels in laplacian are changing sign
+            if (grad.at<uchar>(i, j) >= T && isSurroundingPixelSameSign(laplacian, i, j)) {
+                img.at<uchar>(i, j) = 0;
+            }
+        }
+    }
+
+    return img;
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         std::cout << "Usage: " << argv[0] << " <image_path>" << std::endl;
@@ -379,8 +413,8 @@ int main(int argc, char **argv) {
     setTrackbarPos(ALPHA_NAME, WINDOW_NAME, ALPHA);
 
     // trackbar for delta
-    createTrackbar(DELTA_NAME, WINDOW_NAME, &DELTA, 255, NULL);
-    setTrackbarPos(DELTA_NAME, WINDOW_NAME, DELTA);
+    createTrackbar(T_NAME, WINDOW_NAME, &T, 255, NULL);
+    setTrackbarPos(T_NAME, WINDOW_NAME, T);
 
     imshow(WINDOW_NAME, initImage);
 
@@ -506,6 +540,13 @@ int main(int argc, char **argv) {
         if (key == 100) {
             std::cout << "Gradient" << std::endl;
             workingImage = gradient(workingImage);
+            imshow(WINDOW_NAME, workingImage);
+        }
+
+        // if key is m, call marrHildreth
+        if (key == 109) {
+            std::cout << "Marr-Hildreth" << std::endl;
+            workingImage = marrHildreth(workingImage);
             imshow(WINDOW_NAME, workingImage);
         }
 
