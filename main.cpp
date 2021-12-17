@@ -226,6 +226,9 @@ Mat floydSteinbergDithering(Mat image) {
                 } else {
                     newPixelValue = 0.0;
                 }
+                oldPixelValue = std::max(0.0f,oldPixelValue);
+                oldPixelValue = std::min(255.0f,oldPixelValue);
+
                 errorValue = oldPixelValue - newPixelValue;
 
                 channels[i].at<float>(y, x) = newPixelValue;
@@ -732,7 +735,6 @@ int main(int argc, char **argv) {
 
                 if (ascii_code == 'x') {
                     std::cout << "x key pressed" << std::endl;
-                    needGreyScale = false;
                     imageFunction = &sorbelX;
                     if (isGreyScale) {
                         histogramFunction = &imageHistogram;
@@ -745,7 +747,6 @@ int main(int argc, char **argv) {
 
                 if (ascii_code == 'y') {
                     std::cout << "y key pressed" << std::endl;
-                    needGreyScale = false;
                     imageFunction = &sorbelY;
                     if (isGreyScale) {
                         histogramFunction = &imageHistogram;
@@ -758,15 +759,9 @@ int main(int argc, char **argv) {
 
                 if (ascii_code == 'd') {
                     std::cout << "d key pressed" << std::endl;
-                    needGreyScale = false;
+                    needGreyScale     = true;
                     imageFunction = &gradient;
-                    if (isGreyScale) {
-                        histogramFunction = &imageHistogram;
-                        needGreyScale     = true;
-                    } else {
-                        histogramFunction = &colorHistogram;
-                        needGreyScale     = false;
-                    }
+                    histogramFunction = &imageHistogram;
                 }
 
                 if (key_code == 113)
