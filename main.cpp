@@ -22,13 +22,13 @@ Mat greyScale(Mat f) {
     Mat res;
     // Check if the image is already grey scale and print the message
     if (f.channels() == 1) {
-        std::cout << "Image is already grey scale" << std::endl;
+        // std::cout << "Image is already grey scale" << std::endl;
         return f;
     }
     // else convert the image to grey scale and print the message "Image was in color and has been converted to grey scale"
     else {
         cvtColor(f, res, COLOR_BGR2GRAY);
-        std::cout << "Image was in color and has been converted to grey scale" << std::endl;
+        // std::cout << "Image was in color and has been converted to grey scale" << std::endl;
         return res;
     }
 }
@@ -282,13 +282,13 @@ Mat filter(Mat image, Mat kernel) {
     return filter(image, kernel, 0.0);
 }
 
-Mat filterMoyenneur(Mat image) {
+Mat filtreMoyenneur(Mat image) {
     Mat kernel = (Mat_<float>(3, 3) << 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0);
     return filter(image, kernel);
 }
 
 Mat contrastEnhancement(Mat image) {
-    std::cout << "Contraste" << std::endl;
+    // std::cout << "Contraste" << std::endl;
     ALPHA        = getTrackbarPos(ALPHA_NAME, WINDOW_NAME);
     float alphaF = ALPHA / 1000.0;
     Mat kernel   = (Mat_<float>(3, 3) << 0.0, alphaF * -1.0, 0.0, alphaF * -1.0, 1.0 + alphaF * 4.0, alphaF * -1.0, 0.0, alphaF * -1.0, 0.0);
@@ -306,7 +306,7 @@ Mat medianBlur(Mat image, int size) {
 }
 
 Mat medianBlur(Mat image) {
-    std::cout << "Median blur" << std::endl;
+    // std::cout << "Median blur" << std::endl;
     BLUR    = getTrackbarPos(MEDIAN_NAME, WINDOW_NAME);
     Mat img = medianBlur(image, BLUR);
     return img;
@@ -323,28 +323,28 @@ Mat laplacianBlur(Mat image, int size) {
 }
 
 Mat laplacianBlur(Mat image) {
-    std::cout << "Laplacian blur" << std::endl;
+    // std::cout << "Laplacian blur" << std::endl;
     BLUR    = getTrackbarPos(MEDIAN_NAME, WINDOW_NAME);
     Mat img = laplacianBlur(image, BLUR);
     return img;
 }
 
 Mat sorbelX(Mat image) {
-    std::cout << "Sorbel X" << std::endl;
+    // std::cout << "Sorbel X" << std::endl;
     Mat kernel = (Mat_<float>(3, 3) << -1.0 / 4.0, 0.0, 1.0 / 4.0, -2.0 / 4.0, 0.0, 2.0 / 4.0, -1.0 / 4.0, 0.0, 1.0 / 4.0);
     Mat img    = filter(image, kernel, 128.0);
     return img;
 }
 
 Mat sorbelY(Mat image) {
-    std::cout << "Sorbel Y" << std::endl;
+    // std::cout << "Sorbel Y" << std::endl;
     Mat kernel = (Mat_<float>(3, 3) << -1.0 / 4.0, -2.0 / 4.0, -1.0 / 4.0, 0.0, 0.0, 0.0, 1.0 / 4.0, 2.0 / 4.0, 1.0 / 4.0);
     Mat img    = filter(image, kernel, 128.0);
     return img;
 }
 
 Mat gradient(Mat image) {
-    std::cout << "Gradient" << std::endl;
+    // std::cout << "Gradient" << std::endl;
     Mat grad = Mat(image.size(), CV_8UC1, Scalar(0.0));
     Mat imgX = sorbelX(image);
     Mat imgY = sorbelY(image);
@@ -359,9 +359,41 @@ Mat gradient(Mat image) {
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        std::cout << "Usage: " << argv[0] << " <image_path>" << std::endl;
+        std::cout << "Usage: " << argv[0] << "./main <image_path>" << std::endl;
         return -1;
     }
+
+    std::cout << "ESC   - Quit" << std::endl;
+    std::cout << "r     - reset image" << std::endl;
+    std::cout << "g     - grey scale" << std::endl;
+    std::cout << "h     - grey scale histogram" << std::endl;
+    std::cout << "c     - color histogram" << std::endl;
+    std::cout << "e     - equalize grey scale histogram" << std::endl;
+    std::cout << "f     - equalize color histogram" << std::endl;
+    std::cout << "t     - Floyd-Steinberg dithering (half toning)" << std::endl;
+    std::cout << "u     - Floyd-Steinberg dithering (CMYK) (not working)" << std::endl;
+    std::cout << "a     - filtre moyenneur" << std::endl;
+    std::cout << "b     - median blur" << std::endl;
+    std::cout << "o     - contrast enhancement" << std::endl;
+    std::cout << "x     - sorbel X" << std::endl;
+    std::cout << "y     - sorbel Y" << std::endl;
+    std::cout << "l     - Laplacian blur" << std::endl;
+    std::cout << "d     - gradient" << std::endl;
+    std::cout << "SPACE - live camera" << std::endl;
+    std::cout << "\tg - grey scale" << std::endl;
+    std::cout << "\tc - color image" << std::endl;
+    std::cout << "\te - equalize grey scale histogram" << std::endl;
+    std::cout << "\tf - equalize color histogram" << std::endl;
+    std::cout << "\tt - Floyd-Steinberg dithering (half toning)" << std::endl;
+    std::cout << "\tu - color Floyd-Steinberg dithering (half toning)" << std::endl;
+    std::cout << "\ta - filtre moyenneur" << std::endl;
+    std::cout << "\tb - median blur" << std::endl;
+    std::cout << "\to - contrast enhancement" << std::endl;
+    std::cout << "\tl - Laplacian blur" << std::endl;
+    std::cout << "\tx - sorbel X" << std::endl;
+    std::cout << "\ty - sorbel Y" << std::endl;
+    std::cout << "\td - gradient" << std::endl;
+    
 
     String imagePath = argv[1];
 
@@ -464,7 +496,7 @@ int main(int argc, char **argv) {
 
         // if key is a, call filtreMoyenneur
         if (key == 97) {
-            workingImage = filterMoyenneur(workingImage);
+            workingImage = filtreMoyenneur(workingImage);
             imshow(WINDOW_NAME, workingImage);
         }
 
@@ -516,7 +548,6 @@ int main(int argc, char **argv) {
             Mat frameImage, frameHistogram;
 
             Mat (*imageFunction)(Mat)             = NULL;
-            Mat (*blurFonction)(Mat, Mat, double) = NULL;
             Mat (*histogramFunction)(Mat)         = &colorHistogram;
 
             Mat kernel;
@@ -606,8 +637,7 @@ int main(int argc, char **argv) {
 
                 if (ascii_code == 'a') {
                     std::cout << "a key pressed" << std::endl;
-                    imageFunction = NULL;
-                    blurFonction  = &filter;
+                    imageFunction = &filtreMoyenneur;
                     blurLevel++;
                     if (isGreyScale) {
                         histogramFunction = &imageHistogram;
@@ -620,7 +650,6 @@ int main(int argc, char **argv) {
 
                 if (ascii_code == 'b') {
                     std::cout << "b key pressed" << std::endl;
-                    blurFonction  = NULL;
                     needGreyScale = false;
                     imageFunction = &medianBlur;
                     blurLevel++;
@@ -649,7 +678,6 @@ int main(int argc, char **argv) {
 
                 if (ascii_code == 'l') {
                     std::cout << "l key pressed" << std::endl;
-                    needGreyScale = false;
                     imageFunction = &laplacianBlur;
                     blurLevel++;
                     if (isGreyScale) {
